@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.backend.db_depends import get_db
 # Аннотации, Модели БД и Pydantic.
 from typing import Annotated
-from app.models.user import User
+from app.models import User, Task
 from app.schemas import CreateUser, UpdateUser
 # Функции работы с записями.
 from sqlalchemy import insert, select, update, delete
@@ -16,6 +16,7 @@ from slugify import slugify
 router = APIRouter(prefix="/user", tags=["user"])
 
 
+@router.get("/all_user")
 async def get_all_users(db: Annotated[Session, Depends(get_db)]):
     users = db.scalars(select(User)).all()
     return users
@@ -83,7 +84,7 @@ async def delete_user(user_id: int, db: Annotated[Session, Depends(get_db)]):
             detail='User not found'
         )
     db.execute(delete(User).where(User.id == user_id))
-    #db.execute(delete(Task).where(Task.user_id == user_id))
+    db.execute(delete(Task).where(Task.user_id == user_id))
     db.commit()
     return {
         'status_code': status.HTTP_200_OK,
