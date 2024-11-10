@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from app.backend.db_depends import get_db
 # Аннотации, Модели БД и Pydantic.
 from typing import Annotated
-from app.models import User, Task
+from app.models.user import User
+from app.models.task import Task
 from app.schemas import CreateUser, UpdateUser
 # Функции работы с записями.
 from sqlalchemy import insert, select, update, delete
@@ -16,7 +17,6 @@ from slugify import slugify
 router = APIRouter(prefix="/user", tags=["user"])
 
 
-@router.get("/all_user")
 async def get_all_users(db: Annotated[Session, Depends(get_db)]):
     users = db.scalars(select(User)).all()
     return users
@@ -31,6 +31,18 @@ async def user_by_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
             detail='User not found'
         )
     return user
+
+
+@router.get('/user_id/tasks')
+async def tasks_by_user_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
+    user = db.scalar(select(User).where(User.id == user_id))
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='User not found'
+        )
+    all_tasks = db.scalars(select(Task).where(Task.user_id == user_id)).all()
+    return all_tasks
 
 
 @router.post("/create")
